@@ -13,4 +13,4 @@ target_include_directories(ecewo_mock PUBLIC
 
 if(TARGET ecewo::ecewo)
     target_link_libraries(ecewo_mock PUBLIC ecewo::ecewo)
-else()
+endif()
