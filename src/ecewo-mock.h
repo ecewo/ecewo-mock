@@ -17,14 +17,12 @@ typedef enum {
   MOCK_OPTIONS
 } MockMethod;
 
-typedef struct
-{
+typedef struct {
   const char *key;
   const char *value;
 } MockHeaders;
 
-typedef struct
-{
+typedef struct {
   uint16_t status_code;
   char *body;
   size_t body_len;
@@ -32,8 +30,7 @@ typedef struct
   size_t header_count;
 } MockResponse;
 
-typedef struct
-{
+typedef struct {
   MockMethod method;
   const char *path;
   const char *body;
@@ -47,6 +44,7 @@ typedef void (*test_routes_cb_t)(void);
 void free_request(MockResponse *res);
 MockResponse request(MockParams *params);
 
+// Returns 0 on success, -1 on failure
 int mock_init(test_routes_cb_t routes_callback);
 void mock_cleanup(void);
 

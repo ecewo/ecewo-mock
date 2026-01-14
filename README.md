@@ -4,22 +4,36 @@ The `ecewo-mock.h` file provides a lightweight HTTP mocking plugin for Ecewo app
 
 ## Table of Contents
 
-1. [Types](#types)
+1. [Installation](#installation)
+2. [Types](#types)
     1. [`MockMethod`](#mockmethod)
     2. [`MockHeaders`](#mockheaders)
     3. [`MockParams`](#mockparams)
     4. [`MockResponse`](#mockresponse)
-2. [Functions](#functions)
+3. [Functions](#functions)
     1. [`request()`](#request)
     2. [`free_request()`](#free_request)
     3. [`mock_init()`](#mock_init)
     4. [`mock_cleanup()`](#mock_cleanup)
     5. [`mock_get_header()`](#mock_get_header)
-3. [Usage](#usage)
+4. [Usage](#usage)
 
 > [!NOTE]
 >
 > This plugin is for mocking HTTP request only. It doesn't provide assert macros. The assert macros used in this documentation were taken from the [savashn/myassert](https://github.com/savashn/myassert) repository.
+
+## Installation
+
+Add to your `CMakeLists.txt`:
+
+```sh
+ecewo_plugin(mock)
+
+target_link_libraries(app PRIVATE
+    ecewo::ecewo
+    ecewo::mock
+)
+```
 
 ## Types
 
