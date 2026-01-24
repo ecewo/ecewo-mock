@@ -39,15 +39,10 @@ typedef struct
   uv_loop_t *loop;
 } http_client_t;
 
-static void delayed_shutdown(void *data) {
-  (void)data;
-  server_shutdown();
-}
-
 static void shutdown_handler(Req *req, Res *res) {
   (void)req;
   send_text(res, 200, "Shutting down");
-  set_timeout(delayed_shutdown, 100, NULL);
+  uv_stop(get_loop());
 }
 
 static void test_handler(Req *req, Res *res) {
