@@ -39,10 +39,15 @@ typedef struct
   uv_loop_t *loop;
 } http_client_t;
 
+static void delayed_shutdown(void *data) {
+  (void)data;
+  server_shutdown();
+}
+
 static void shutdown_handler(Req *req, Res *res) {
   (void)req;
   send_text(res, 200, "Shutting down");
-  uv_stop(get_loop());
+  set_timeout(delayed_shutdown, 100, NULL);
 }
 
 static void test_handler(Req *req, Res *res) {
@@ -55,6 +60,7 @@ static void server_thread_fn(void *arg) {
 
   if (server_init() != 0) {
     LOG_ERROR("Failed to initialize server");
+    server_ready = false;
     return;
   }
 
@@ -66,11 +72,13 @@ static void server_thread_fn(void *arg) {
 
   if (server_listen(TEST_PORT) != 0) {
     LOG_ERROR("Failed to start server on port %d", TEST_PORT);
+    server_ready = false;
     return;
   }
 
   server_ready = true;
   server_run();
+  server_ready = false;
 }
 
 static void on_close(uv_handle_t *handle) {
@@ -554,6 +562,11 @@ int mock_init(test_routes_cb_t routes_callback) {
 }
 
 void mock_cleanup(void) {
+   if (!server_ready) {
+    uv_thread_join(&server_thread);
+    return;
+  }
+
   MockParams params = {
     .method = MOCK_GET,
     .path = "/ecewo-test-shutdown",
@@ -561,11 +574,16 @@ void mock_cleanup(void) {
     .headers = NULL,
     .header_count = 0
   };
+
   MockResponse resp = request(&params);
   free_request(&resp);
 
   uv_thread_join(&server_thread);
   uv_sleep(100);
+
+  server_ready = false;
+  shutdown_requested = false;
+  test_routes = NULL;
 
 #ifdef _WIN32
   _putenv_s("ECEWO_TEST_MODE", "");
