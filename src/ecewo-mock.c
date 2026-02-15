@@ -23,8 +23,7 @@ static bool server_ready = false;
 static bool shutdown_requested = false;
 static test_routes_cb_t test_routes = NULL;
 
-typedef struct
-{
+typedef struct {
   uv_tcp_t tcp;
   uv_connect_t connect_req;
   uv_write_t write_req;
@@ -42,7 +41,7 @@ typedef struct
 static void shutdown_handler(Req *req, Res *res) {
   (void)req;
   send_text(res, 200, "Shutting down");
-  uv_stop(get_loop());
+  server_shutdown();
 }
 
 static void test_handler(Req *req, Res *res) {
@@ -404,6 +403,20 @@ void free_request(MockResponse *res) {
   }
 }
 
+static void close_walk_cb(uv_handle_t *handle, void *arg) {
+  (void)arg;
+
+  if (uv_is_closing(handle))
+    return;
+
+  if (handle->type == UV_TCP) {
+  } else if (handle->type == UV_TIMER) {
+    uv_timer_stop((uv_timer_t *)handle);
+  }
+
+  uv_close(handle, NULL);
+}
+
 MockResponse request(MockParams *params) {
   uint64_t start_time = uv_hrtime();
 
@@ -526,7 +539,14 @@ MockResponse request(MockParams *params) {
 
   free(request_data);
   free(client.response_buffer);
-  uv_loop_close(&loop);
+
+  uv_stop(&loop);
+  uv_walk(&loop, close_walk_cb, NULL);
+  uv_run(&loop, UV_RUN_DEFAULT);
+
+  int close_result = uv_loop_close(&loop);
+  if (close_result != 0)
+    LOG_ERROR("uv_loop_close failed in request(): %s", uv_strerror(close_result));
 
   return response;
 }
