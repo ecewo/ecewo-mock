@@ -130,11 +130,24 @@ static void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
   client->response_len += (size_t)nread;
   client->response_buffer[client->response_len] = '\0';
 
-  // Check if we have complete HTTP response
-  if (strstr(client->response_buffer, "\r\n\r\n")) {
-    uv_read_stop(stream);
-    uv_shutdown(&client->shutdown_req, stream, on_shutdown);
-    client->shutdown_req.data = client;
+  char *header_end = strstr(client->response_buffer, "\r\n\r\n");
+  if (!header_end)
+    return;
+
+  char *cl = strcasestr(client->response_buffer, "Content-Length:");
+  if (cl && cl < header_end) {
+    long content_length = atol(cl + 15);
+    size_t body_offset = (header_end + 4) - client->response_buffer;
+    size_t body_received = client->response_len - body_offset;
+
+    if ((long)body_received >= content_length) {
+      uv_read_stop(stream);
+      uv_shutdown(&client->shutdown_req, stream, on_shutdown);
+      client->shutdown_req.data = client;
+    }
+  } else {
+    // No content-length, so connection close
+    // Wait for EOF, continue to read
   }
 }
 
@@ -142,6 +155,18 @@ static void on_write(uv_write_t *req, int status) {
   http_client_t *client = (http_client_t *)req->data;
 
   if (status < 0) {
+    // Write failed but the server may still have sent a response like 413
+    // so need to continue to read
+    if (status == UV_ECONNRESET || status == UV_EPIPE) {
+      int result = uv_read_start((uv_stream_t *)&client->tcp, alloc_buffer, on_read);
+      if (result < 0) {
+        client->status = -1;
+        uv_close((uv_handle_t *)&client->tcp, on_close);
+      }
+      // Reading started, on_read will parse it
+      return;
+    }
+
     LOG_ERROR("Write error: %s", uv_strerror(status));
     client->status = -1;
     uv_close((uv_handle_t *)&client->tcp, on_close);
@@ -577,7 +602,7 @@ int mock_init(test_routes_cb_t routes_callback) {
 }
 
 void mock_cleanup(void) {
-   if (!server_ready) {
+  if (!server_ready) {
     uv_thread_join(&server_thread);
     return;
   }
