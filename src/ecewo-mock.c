@@ -7,6 +7,16 @@
 
 #ifdef _WIN32
 #define strcasecmp _stricmp
+static char *strcasestr(const char *haystack, const char *needle) {
+  if (!needle || !*needle)
+    return (char *)haystack;
+  size_t needle_len = strlen(needle);
+  for (; *haystack; haystack++) {
+    if (_strnicmp(haystack, needle, needle_len) == 0)
+      return (char *)haystack;
+  }
+  return NULL;
+}
 #else
 #include <strings.h>
 #endif
