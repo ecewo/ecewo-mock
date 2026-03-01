@@ -1,6 +1,7 @@
 #include "ecewo.h"
 #include "ecewo-mock.h"
 #include "uv.h"
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h> // strcasecmp in mock_get_header
@@ -29,8 +30,8 @@ static char *strcasestr(const char *haystack, const char *needle) {
 #define BUFFER_SIZE 8192
 
 static uv_thread_t server_thread;
-static bool server_ready = false;
-static bool shutdown_requested = false;
+static _Atomic bool server_ready = false;
+static _Atomic bool shutdown_requested = false;
 static test_routes_cb_t test_routes = NULL;
 
 typedef struct {
