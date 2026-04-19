@@ -39,7 +39,8 @@ typedef struct {
 } MockParams;
 
 #define TEST_PORT 8888
-typedef void (*test_routes_cb_t)(void);
+typedef struct ecewo_app_s ecewo_app_t;
+typedef void (*test_routes_cb_t)(ecewo_app_t *app);
 
 void free_request(MockResponse *res);
 MockResponse request(MockParams *params);

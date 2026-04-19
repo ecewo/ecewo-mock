@@ -49,40 +49,40 @@ typedef struct {
   uv_loop_t *loop;
 } http_client_t;
 
-static void shutdown_handler(Req *req, Res *res) {
-  (void)req;
-  send_text(res, 200, "Shutting down");
-  server_shutdown();
+static void shutdown_handler(ecewo_request_t *req, ecewo_response_t *res) {
+  ecewo_send_text(res, 200, "Shutting down");
+  ecewo_shutdown(ecewo_req_app(req));
 }
 
-static void test_handler(Req *req, Res *res) {
+static void test_handler(ecewo_request_t *req, ecewo_response_t *res) {
   (void)req;
-  send_text(res, OK, "Test");
+  ecewo_send_text(res, ECEWO_OK, "Test");
 }
 
 static void server_thread_fn(void *arg) {
   (void)arg;
 
-  if (server_init() != 0) {
-    LOG_ERROR("Failed to initialize server");
+  ecewo_app_t *app = ecewo_create();
+  if (!app) {
+    LOG_ERROR("Failed to create app");
     server_ready = false;
     return;
   }
 
   if (test_routes)
-    test_routes();
+    test_routes(app);
 
-  get("/ecewo-test-shutdown", shutdown_handler);
-  get("/ecewo-test-check", test_handler);
+  ECEWO_GET(app, "/ecewo-test-shutdown", shutdown_handler);
+  ECEWO_GET(app, "/ecewo-test-check", test_handler);
 
-  if (server_listen(TEST_PORT) != 0) {
+  if (ecewo_bind(app, TEST_PORT) != 0) {
     LOG_ERROR("Failed to start server on port %d", TEST_PORT);
     server_ready = false;
     return;
   }
 
   server_ready = true;
-  server_run();
+  ecewo_run(app);
   server_ready = false;
 }
 
