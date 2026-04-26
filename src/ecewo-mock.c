@@ -82,7 +82,7 @@ static void server_thread_fn(void *arg) {
   }
 
   server_ready = true;
-  ecewo_run(app);
+  ecewo_run();
   server_ready = false;
 }
 
