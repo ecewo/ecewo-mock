@@ -27,7 +27,7 @@ The `ecewo-mock.h` file provides a lightweight HTTP mocking plugin for Ecewo app
 Add to your `CMakeLists.txt`:
 
 ```sh
-ecewo_plugin(mock)
+ecewo_plugin(mock@v0.2.0)
 
 target_link_libraries(app PRIVATE
     ecewo::ecewo
