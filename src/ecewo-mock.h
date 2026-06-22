@@ -14,7 +14,8 @@ typedef enum {
   MOCK_PUT,
   MOCK_DELETE,
   MOCK_PATCH,
-  MOCK_OPTIONS
+  MOCK_OPTIONS,
+  MOCK_QUERY
 } MockMethod;
 
 typedef struct {

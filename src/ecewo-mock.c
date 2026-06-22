@@ -252,6 +252,9 @@ static char *build_http_request(MockParams *params) {
   case MOCK_OPTIONS:
     method = "OPTIONS";
     break;
+  case MOCK_QUERY:
+    method = "QUERY";
+    break;
   }
 
   len += snprintf(request + len, buffer_size - len,
